@@ -1,5 +1,6 @@
 import sys
 import time
+import socket
 from typing import Optional
 from requests.exceptions import ConnectionError
 import requests
@@ -77,23 +78,12 @@ def broadcast_block(block: Block):
     return
 
 
+
+
+
 def ping_dns_server():
     """ping the DNS server to stay as an active node"""
-    url = f"{Config.dns_host}/ping/{Config.get_node_port()}"
-    for _ in range(5):
-        try:
-            requests.get(url)
-            return
-        except requests.exceptions.ConnectionError:
-            time.sleep(0.5)
-
-    raise RuntimeError(f"Server DNS is not reachable for pinging. {url}" )
-
-
-
-#def ping_dns_server():
-    """ping the DNS server to stay as an active node"""
-    message = f"PING {Config.get_node_port()} {time.time()}"
+    message = f"PING {Config.get_node_port()}"
     for _ in range(5):
         try:
             # connect to the DNS server

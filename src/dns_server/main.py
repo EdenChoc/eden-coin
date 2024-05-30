@@ -7,8 +7,6 @@ import pymongo
 
 
 import socket
-import threading
-
 
 def start_server(server_ip, server_port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,32 +17,34 @@ def start_server(server_ip, server_port):
     while True:
         client_socket, addr = server.accept()
         print(f"Accepted connection from {addr}")
-        # maybe need to add here something
-
-
-def node_say_ping(client_socket):
-    try:
         message = client_socket.recv(1024).decode('utf-8')
         print(f"Received: {message}")
 
+
         if message.startswith("PING"):
-            _, port, last_pind_ts = message.split()
-            ip = client_socket.getpeername()[0]
+            _, port = message.split()
+            node_say_ping(ip= addr, port=port)
+            if
+                response = "OK"
+        client_socket.sendall(response.encode('utf-8'))
 
-            collection.update_one(
-                {"ip": ip, "port": port},
-                {"$set": {
-                    "last_ping_ts": float(last_pind_ts)}}
-            )
-            print(f"Node {ip}:{port} updated in the database.")
+        client_socket.close()
 
-            response = "OK"
-            client_socket.sendall(response.encode('utf-8'))
+def node_say_ping(ip, port):
+    try:
+        collection.update_one(
+            {"ip": ip, "port": port},
+            {"$set": {
+                "last_ping_ts": int(time.time())}}
+        )
+        print(f"Node {ip}:{port} updated in the database.")
+        return True
+
 
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        client_socket.close()
+
+
 
 
 def node_say_bye(client_socket):
