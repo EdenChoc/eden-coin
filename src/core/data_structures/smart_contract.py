@@ -7,10 +7,6 @@ from core.data_structures.account import Account
 from core.security import verifying_key_from_str
 
 
-
-
-
-
 if TYPE_CHECKING:
     from core.data_structures.world_state import WorldState
 

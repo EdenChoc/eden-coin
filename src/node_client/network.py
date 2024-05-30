@@ -89,3 +89,32 @@ def ping_dns_server():
 
     raise RuntimeError(f"Server DNS is not reachable for pinging. {url}" )
 
+
+
+#def ping_dns_server():
+    """ping the DNS server to stay as an active node"""
+    message = f"PING {Config.get_node_port()} {time.time()}"
+    for _ in range(5):
+        try:
+            # connect to the DNS server
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((Config.dns_host, Config.dns_port))
+
+                # send message to DNS server
+                s.sendall(message.encode('utf-8'))
+                print(f"Sent: {message}")
+
+                response = s.recv(1024).decode('utf-8')
+                print(f"Received: {response}")
+
+                if response == "OK":
+                    return
+
+        except socket.error as e:
+            print(f"Connection error: {e}")
+            time.sleep(0.5)
+
+        raise RuntimeError(f"Server DNS is not reachable for pinging. {Config.dns_host}:{Config.dns_port}")
+
+
+

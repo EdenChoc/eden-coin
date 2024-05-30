@@ -20,6 +20,10 @@ def mainloop():
 
 
 ping_dns_server()
+
+# Thread 1: Loop
 mainloop_thread = threading.Thread(target=mainloop)
 mainloop_thread.start()
+
+# Main thread: app
 app.run(port=Config.get_node_port())

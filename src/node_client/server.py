@@ -52,7 +52,7 @@ def post_instruction():
 
     print(f"Executed contract {payload['id_program']}, creating block {new_index}")
     block = Block(
-        index= new_index,
+        index=new_index,
         miner_id=Config.node_id,
         data=new_world_state,
         previous_hash=last_block.get_hash(),
