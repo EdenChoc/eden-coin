@@ -2,24 +2,16 @@
 It should store a table of all the living nodes and update it when some join/leave
 """
 import threading
-
-import flask
 import time
 import pymongo
-
-
 import socket
 
 from core.config import Config
-
-PORT = 7474
 
 DB_URL = "mongodb://localhost:27017"
 DB_NAME = "blockchain_dns_server"
 COLL_NAME = "nodes_info"
 NODE_TTL_SEC = 35
-
-app = flask.Flask("DNS_SERVER")
 
 client = pymongo.MongoClient(DB_URL)
 collection = client[DB_NAME][COLL_NAME]
@@ -39,9 +31,8 @@ def start_server():
         message = client_socket.recv(1024).decode('utf-8')
         print(f"Received: {message}")
 
-        response = "NO"
-        msg_lst = message.split()
-        port = msg_lst[1]
+        response = "ERROR"
+        _, port = message.split()
         if message.startswith("PING"):
             if node_say_ping(ip=addr, port=port):
                 response = "OK"
@@ -50,8 +41,14 @@ def start_server():
             if node_say_bye(ip=addr, port=port):
                 response = "OK"
 
-        client_socket.sendall(response.encode('utf-8'))
+        if message.startswith("GET_NODES"):
+            response = get_nodes()
 
+        if message.startswith("RESET"):
+            if reset():
+                response = "OK"
+
+        client_socket.sendall(response.encode('utf-8'))
         client_socket.close()
 
 def node_say_ping(ip, port):
@@ -81,25 +78,30 @@ def node_say_bye(ip, port):
         print(f"Error: {e}")
 
 
-@app.route("/get-nodes")
+
 def get_nodes():
-    nodes = collection.find({
+    try:
+        nodes = collection.find({
         "last_ping_ts": {"$gt": time.time()-NODE_TTL_SEC}
-    })
-    nodes = [f"{n['ip']}:{n['port']}" for n in nodes]
-    return flask.jsonify(nodes)
+        })
+        nodes_list = [f"{n['ip']}:{n['port']}" for n in nodes]
+        response = ",".join(nodes_list)
+        return response
+    except Exception as e:
+        print(f"Error: {e}")
+        return "Error"
 
 
-@app.route("/reset")
+
 def reset():
     collection.delete_many({})
-    return "OK"
+    return True
 
 
 if __name__ == '__main__':
     server_thread = threading.Thread(target=start_server())
     server_thread.start()
 
-    app.run(port=server_port)
+
 
 

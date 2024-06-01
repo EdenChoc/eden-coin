@@ -12,22 +12,39 @@ from node_client.config import Config
 
 def get_nodes():
     """return the list of all the active nodes"""
-    url = f"{Config.dns_host}/get-nodes"
+    message = "GET_NODES"
+
     for _ in range(3):
         try:
-            response = requests.get(url)
-            nodes = response.json()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((Config.dns_ip, Config.dns_port))
 
-            me = f"{Config.node_host}:{Config.get_node_port()}"
-            if me in nodes:
-                nodes.remove(me)
+                s.sendall(message.encode('utf-8'))
+                print(f"Sent: {message}")
 
-            return nodes
-        except requests.exceptions.ConnectionError:
-            print(f"Couldn't get nodes from DNS (address: {Config.dns_host}), retrying.")
+                BUFF_SIZE = 4096
+                data = b''
+                while True:
+                    part = s.recv(BUFF_SIZE)
+                    data += part
+                    if len(part) < BUFF_SIZE:
+                        break
+                print(f"Received: {data}")
+
+                data_str = data.decode('utf-8')
+                nodes = data_str.split(",")
+                me = f"{Config.node_host}:{Config.get_node_port()}"
+                if me in nodes:
+                    nodes.remove(me)
+
+                return nodes
+
+        except socket.error as e:
+            print(f"Couldn't get nodes from DNS (address: {Config.dns_ip}), retrying: {e}")
             time.sleep(0.2)
 
-    raise requests.exceptions.ConnectionError
+        raise ConnectionError(f"Server DNS is not reachable. {Config.dns_ip}:{Config.dns_port}")
+
 
 def get_chain_last_block() -> Optional[dict]:
     """Ask a node for the last block on the chain"""
