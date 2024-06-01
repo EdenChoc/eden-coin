@@ -9,7 +9,7 @@ class Config:
     dns_host = "{dns_ip} {dns_port}"
 
     _node_port = None
-    node_host = "127.0.0.1"
+    node_host = "192.168.86.30"
     node_id = str(uuid.uuid4())
     #node_id = "main" # TODO
     mainloop_sleep_sec = 10

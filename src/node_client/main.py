@@ -25,4 +25,4 @@ mainloop_thread = threading.Thread(target=mainloop)
 mainloop_thread.start()
 
 # Main thread: app
-app.run(port=Config.get_node_port())
+app.run(host="0.0.0.0", port=Config.get_node_port())

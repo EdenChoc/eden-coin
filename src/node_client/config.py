@@ -6,11 +6,11 @@ from core.config import Config as CoreConfig
 
 class Config(CoreConfig):
     _node_port = None
-    node_host = "127.0.0.1"
+    node_host = "192.168.86.30"
     node_id = str(uuid.uuid4())
     #node_id = "main" # TODO
     mainloop_sleep_sec = 10
-    db_url = "mongodb://localhost:27017"
+    db_url = "mongodb://192.168.86.30:27017"
     db_name = "blockchain_nodes"
 
     @classmethod
