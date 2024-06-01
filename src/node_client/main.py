@@ -8,7 +8,6 @@ from node_client.server import app
 
 print(f"Started node with id {Config.node_id} (port: {Config.get_node_port()})")
 
-
 def mainloop():
     curr_last_block = get_chain_last_block()
     insert_first_block(curr_last_block)

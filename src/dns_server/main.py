@@ -1,6 +1,8 @@
 """The DNS server is helping nodes to find the ip addresses of the other nodes
 It should store a table of all the living nodes and update it when some join/leave
 """
+import threading
+
 import flask
 import time
 import pymongo
@@ -8,7 +10,24 @@ import pymongo
 
 import socket
 
-def start_server(server_ip, server_port):
+from core.config import Config
+
+PORT = 7474
+
+DB_URL = "mongodb://localhost:27017"
+DB_NAME = "blockchain_dns_server"
+COLL_NAME = "nodes_info"
+NODE_TTL_SEC = 35
+
+app = flask.Flask("DNS_SERVER")
+
+client = pymongo.MongoClient(DB_URL)
+collection = client[DB_NAME][COLL_NAME]
+
+server_ip = Config.dns_ip
+server_port = Config.dns_port
+
+def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((server_ip, server_port))
     server.listen(10)
@@ -20,12 +39,17 @@ def start_server(server_ip, server_port):
         message = client_socket.recv(1024).decode('utf-8')
         print(f"Received: {message}")
 
-
+        response = "NO"
+        msg_lst = message.split()
+        port = msg_lst[1]
         if message.startswith("PING"):
-            _, port = message.split()
-            node_say_ping(ip= addr, port=port)
-            if
+            if node_say_ping(ip=addr, port=port):
                 response = "OK"
+
+        if message.startswith("BYE"):
+            if node_say_bye(ip=addr, port=port):
+                response = "OK"
+
         client_socket.sendall(response.encode('utf-8'))
 
         client_socket.close()
@@ -40,84 +64,21 @@ def node_say_ping(ip, port):
         print(f"Node {ip}:{port} updated in the database.")
         return True
 
-
     except Exception as e:
         print(f"Error: {e}")
 
 
-
-
-def node_say_bye(client_socket):
+def node_say_bye(ip, port):
     try:
-        message = client_socket.recv(1024).decode('utf-8')
-        print(f"Received: {message}")
+        collection.delete_one({
+            "ip": ip,
+            "port": port
+        })
+        print(f"Node {ip}:{port} removed from the database.")
+        return True
 
-        if message.startswith("BYE"):
-            _, port = message.split()
-            ip = client_socket.getpeername()[0]
-
-            collection.delete_one({
-                "ip": ip,
-                "port": port
-            })
-            print(f"Node {ip}:{port} removed from the database.")
-
-            response = "OK"
-            client_socket.sendall(response.encode('utf-8'))
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        client_socket.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                #old code:
-PORT = 7070
-
-DB_URL = "mongodb://localhost:27017"
-DB_NAME = "blockchain_dns_server"
-COLL_NAME = "nodes_info"
-NODE_TTL_SEC = 35
-
-app = flask.Flask("DNS_SERVER")
-
-client = pymongo.MongoClient(DB_URL)
-collection = client[DB_NAME][COLL_NAME]
-
-@app.route("/ping/<port>")
-def node_say_ping(port):
-    collection.update_one(
-        {"ip": flask.request.remote_addr , "port": port},
-      {"$set": {
-            "last_ping_ts": time.time()
-        }},
-        upsert=True
-    )
-    return "OK"
-
-
-@app.route("/bye/<port>")
-def node_say_bye(port):
-    r = collection.delete_one({
-        "ip": flask.request.remote_addr,
-        "port": port
-    })
-    return "OK"
 
 
 @app.route("/get-nodes")
@@ -128,13 +89,17 @@ def get_nodes():
     nodes = [f"{n['ip']}:{n['port']}" for n in nodes]
     return flask.jsonify(nodes)
 
+
 @app.route("/reset")
 def reset():
     collection.delete_many({})
     return "OK"
 
 
-
 if __name__ == '__main__':
-    app.run(port=PORT)
+    server_thread = threading.Thread(target=start_server())
+    server_thread.start()
+
+    app.run(port=server_port)
+
 

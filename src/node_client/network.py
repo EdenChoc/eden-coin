@@ -79,8 +79,6 @@ def broadcast_block(block: Block):
 
 
 
-
-
 def ping_dns_server():
     """ping the DNS server to stay as an active node"""
     message = f"PING {Config.get_node_port()}"
@@ -88,7 +86,7 @@ def ping_dns_server():
         try:
             # connect to the DNS server
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((Config.dns_host, Config.dns_port))
+                s.connect((Config.dns_ip, Config.dns_port))
 
                 # send message to DNS server
                 s.sendall(message.encode('utf-8'))
@@ -104,7 +102,7 @@ def ping_dns_server():
             print(f"Connection error: {e}")
             time.sleep(0.5)
 
-        raise RuntimeError(f"Server DNS is not reachable for pinging. {Config.dns_host}:{Config.dns_port}")
+        raise RuntimeError(f"Server DNS is not reachable for pinging. {Config.dns_host}")
 
 
 
