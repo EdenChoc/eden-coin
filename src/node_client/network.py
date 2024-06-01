@@ -12,7 +12,7 @@ from node_client.config import Config
 
 def get_nodes():
     """return the list of all the active nodes"""
-    message = "GET_NODES"
+    message = f"GET_NODES {Config.get_node_port()}"
 
     for _ in range(3):
         try:

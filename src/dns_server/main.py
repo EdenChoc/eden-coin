@@ -32,7 +32,9 @@ def start_server():
         print(f"Received: {message}")
 
         response = "ERROR"
-        _, port = message.split()
+        x = message.split()
+        print(f"the lst is: {x}")
+        port = x[1]
         if message.startswith("PING"):
             if node_say_ping(ip=addr, port=port):
                 response = "OK"
