@@ -27,7 +27,9 @@ def start_server():
 
     while True:
         client_socket, addr = server.accept()
-        print(f"Accepted connection from {addr}")
+        host, port = client_socket.getpeername()
+
+        print(f"Accepted connection from {host}")
         message = client_socket.recv(1024).decode('utf-8')
         print(f"Received: {message}")
 
@@ -36,11 +38,11 @@ def start_server():
         print(f"the lst is: {x}")
         port = x[1]
         if message.startswith("PING"):
-            if node_say_ping(ip=addr, port=port):
+            if node_say_ping(ip=host, port=port):
                 response = "OK"
 
         if message.startswith("BYE"):
-            if node_say_bye(ip=addr, port=port):
+            if node_say_bye(ip=host, port=port):
                 response = "OK"
 
         if message.startswith("GET_NODES"):
@@ -58,7 +60,9 @@ def node_say_ping(ip, port):
         collection.update_one(
             {"ip": ip, "port": port},
             {"$set": {
-                "last_ping_ts": int(time.time())}}
+                "last_ping_ts": int(time.time())
+            }},
+            upsert=True
         )
         print(f"Node {ip}:{port} updated in the database.")
         return True
